@@ -2,7 +2,7 @@
 # bin/lib/package-release.sh
 #
 # packages/* 配下の1パッケージを、独立した GitHub リポジトリ
-# （shimomo/boatrace-<package>）へ subtree split で切り出し、
+# （shimomo/boatrace-php-<package>）へ subtree split で切り出し、
 # push & GitHub Release 作成までを行うヘルパー。
 # release.sh から `. bin/lib/package-release.sh` で読み込んで使う想定。
 
@@ -35,8 +35,8 @@ package_release_publish() {
 
   package=$(basename "$directory")
   # composer パッケージ名は boatrace/<package> だが、GitHub 上は
-  # shimomo 配下に boatrace- プレフィックス付きで置く。
-  repository="shimomo/boatrace-$package"
+  # shimomo 配下に boatrace-php- プレフィックス付きで置く。
+  repository="shimomo/boatrace-php-$package"
   remote="git@github.com:$repository.git"
 
   echo "==> ${package}"

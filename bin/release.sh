@@ -26,7 +26,7 @@
 #   - bin/lib/composer-version.sh  composer.json のバージョン更新関数
 #   - bin/lib/package-release.sh   パッケージ単位のリリース処理関数
 #   - GitHub CLI (gh) でログイン済みであること
-#   - 各 packages/<name> に対応する shimomo/boatrace-<name> リポジトリが
+#   - 各 packages/<name> に対応する shimomo/boatrace-php-<name> リポジトリが
 #     作成済みで、git push 権限（SSH）があること
 #   - jq, composer（normalize, update）がインストールされていること
 

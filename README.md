@@ -1,8 +1,8 @@
 # 🚤 Boatrace
 
-[![test](https://github.com/shimomo/boatrace/actions/workflows/test.yml/badge.svg)](https://github.com/shimomo/boatrace/actions/workflows/test.yml)
-[![psalm](https://github.com/shimomo/boatrace/actions/workflows/psalm.yml/badge.svg)](https://github.com/shimomo/boatrace/actions/workflows/psalm.yml)
-[![lint](https://github.com/shimomo/boatrace/actions/workflows/lint.yml/badge.svg)](https://github.com/shimomo/boatrace/actions/workflows/lint.yml)
+[![test](https://github.com/shimomo/boatrace-php/actions/workflows/test.yml/badge.svg)](https://github.com/shimomo/boatrace-php/actions/workflows/test.yml)
+[![psalm](https://github.com/shimomo/boatrace-php/actions/workflows/psalm.yml/badge.svg)](https://github.com/shimomo/boatrace-php/actions/workflows/psalm.yml)
+[![lint](https://github.com/shimomo/boatrace-php/actions/workflows/lint.yml/badge.svg)](https://github.com/shimomo/boatrace-php/actions/workflows/lint.yml)
 
 Boatrace は、ボートレース（競艇）のデータ取得ライブラリを開発するモノレポです。
 
@@ -57,7 +57,7 @@ composer require boatrace/scraper boatrace/scraper-boatcast
 
 各ディレクトリは独立した Composer パッケージです。
 
-リリース時には、それぞれ専用リポジトリ（`shimomo/boatrace-<package>`）へ同期され Packagist で公開されます。
+リリース時には、それぞれ専用リポジトリ（`shimomo/boatrace-php-<package>`）へ同期され Packagist で公開されます。
 
 ---
 
