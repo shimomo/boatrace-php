@@ -11,8 +11,8 @@
     ],
     "require": {
         "php": "^8.4",
-        "boatrace/core": "^0.1.0",
-        "boatrace/types": "^0.1.0",
+        "boatrace/core": "^0.2.0",
+        "boatrace/types": "^0.2.0",
         "symfony/browser-kit": "^8.0",
         "symfony/console": "^8.0",
         "symfony/css-selector": "^8.0",
@@ -35,7 +35,7 @@
     },
     "extra": {
         "branch-alias": {
-            "dev-main": "0.1.x-dev"
+            "dev-main": "0.2.x-dev"
         }
     },
     "$schema": "https://getcomposer.org/schema.json"
