@@ -126,6 +126,58 @@ final class ProgramParserTest extends TestCase
      * @return void
      */
     #[Test]
+    public function parseStabilizerReturnsTrueWhenLabelIsPrinted(): void
+    {
+        $this->assertSame(
+            ['is_stabilizer_used_source' => '安定板使用', 'is_stabilizer_used' => true],
+            $this->programParser->parseStabilizer('安定板使用')
+        );
+    }
+
+    /**
+     * @return void
+     */
+    #[Test]
+    public function parseStabilizerPicksOnlyTheStabilizerLabel(): void
+    {
+        $this->assertSame(
+            ['is_stabilizer_used_source' => '安定板使用', 'is_stabilizer_used' => true],
+            $this->programParser->parseStabilizer("進入固定\n\t\t\t安定板使用")
+        );
+    }
+
+    /**
+     * @return void
+     */
+    #[Test]
+    public function parseStabilizerReturnsFalseWhenLabelsAreEmpty(): void
+    {
+        $this->assertSame(
+            ['is_stabilizer_used_source' => null, 'is_stabilizer_used' => false],
+            $this->programParser->parseStabilizer('')
+        );
+        $this->assertSame(
+            ['is_stabilizer_used_source' => null, 'is_stabilizer_used' => false],
+            $this->programParser->parseStabilizer('進入固定')
+        );
+    }
+
+    /**
+     * @return void
+     */
+    #[Test]
+    public function parseStabilizerReturnsNullWhenLabelsAreMissing(): void
+    {
+        $this->assertSame(
+            ['is_stabilizer_used_source' => null, 'is_stabilizer_used' => null],
+            $this->programParser->parseStabilizer(null)
+        );
+    }
+
+    /**
+     * @return void
+     */
+    #[Test]
     public function throwsBadMethodCallExceptionWhenCallingUndefinedMethod(): void
     {
         $this->expectException(BadMethodCallException::class);

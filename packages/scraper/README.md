@@ -134,6 +134,8 @@ Array
     [subtitle] => カタメン1予選
     [distance_source] => 1800m
     [distance] => 1800
+    [is_stabilizer_used_source] =>
+    [is_stabilizer_used] =>
     [day_number_source] => 4日目
     [day_number] => 4
     [racers] => Array

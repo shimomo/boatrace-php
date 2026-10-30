@@ -40,12 +40,12 @@ final class ProgramScraperTest extends TestCase
 
     /**
      * @param non-empty-string $key
-     * @param int|float|string|null $expected
+     * @param int|float|string|bool|null $expected
      * @return void
      */
     #[Test]
     #[DataProviderExternal(ProgramScraperDataProvider::class, 'raceProvider')]
-    public function scrapeReturnsRace(string $key, int|float|string|null $expected): void
+    public function scrapeReturnsRace(string $key, int|float|string|bool|null $expected): void
     {
         $this->assertSame($expected, $this->response[$key] ?? null);
     }
@@ -116,5 +116,32 @@ final class ProgramScraperTest extends TestCase
         $this->assertNull($racers[3]['name']);
         $this->assertNull($racers[3]['motor_top_2_percent']);
         $this->assertCount(30, $racers[3]);
+    }
+
+    /**
+     * @return void
+     */
+    #[Test]
+    public function scrapeReturnsStabilizerWhenLabelIsPrinted(): void
+    {
+        $response = ScraperFactory::createProgramScraper()
+            ->scrape('2017-10-19', 3, 12, MockBrowser::create('program-stabilizer.html'));
+
+        $this->assertSame('安定板使用', $response['is_stabilizer_used_source']);
+        $this->assertTrue($response['is_stabilizer_used']);
+    }
+
+    /**
+     * @return void
+     */
+    #[Test]
+    public function scrapeReturnsNullStabilizerWhenLabelsAreMissing(): void
+    {
+        $response = ScraperFactory::createProgramScraper()
+            ->scrape('2026-08-01', 22, 1, MockBrowser::create('stadium.html'));
+
+        $this->assertArrayHasKey('is_stabilizer_used', $response);
+        $this->assertNull($response['is_stabilizer_used_source']);
+        $this->assertNull($response['is_stabilizer_used']);
     }
 }

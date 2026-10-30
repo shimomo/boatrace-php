@@ -12,7 +12,7 @@ final class ProgramScraperDataProvider
     /**
      * @return non-empty-list<array{
      *     key: non-empty-string,
-     *     expected: int|float|string|null,
+     *     expected: int|float|string|bool|null,
      * }>
      */
     public static function raceProvider(): array
@@ -28,6 +28,8 @@ final class ProgramScraperDataProvider
             ['key' => 'subtitle', 'expected' => 'カタメン1予選'],
             ['key' => 'distance_source', 'expected' => '1800m'],
             ['key' => 'distance', 'expected' => 1800],
+            ['key' => 'is_stabilizer_used_source', 'expected' => null],
+            ['key' => 'is_stabilizer_used', 'expected' => false],
             ['key' => 'day_number_source', 'expected' => '4日目'],
             ['key' => 'day_number', 'expected' => 4],
         ];

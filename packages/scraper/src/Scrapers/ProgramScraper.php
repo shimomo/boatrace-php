@@ -144,6 +144,11 @@ final class ProgramScraper implements ProgramScraperContract
         $subtitleAndDistanceSource = $this->filter->byXPath($scraper, $subtitleAndDistanceXPath);
         $subtitleAndDistance = $this->programParser->parseSubtitleAndDistance($subtitleAndDistanceSource);
 
+        $stabilizerFormat = '%s/div[2]/div[%d]/div';
+        $stabilizerXPath = sprintf($stabilizerFormat, self::BASE_XPATH, $baseLevel + 3);
+        $stabilizerSource = $this->filter->byXPath($scraper, $stabilizerXPath);
+        $stabilizer = $this->programParser->parseStabilizer($stabilizerSource);
+
         $response = [];
 
         $response['date'] = $date->format('Y-m-d');
@@ -154,6 +159,7 @@ final class ProgramScraper implements ProgramScraperContract
         $response += $grade;
         $response += $title;
         $response += $subtitleAndDistance;
+        $response += $stabilizer;
 
         $response += $this->resolveDayNumber($scraper);
         $response += $this->scrapeRacers($scraper, $baseLevel);

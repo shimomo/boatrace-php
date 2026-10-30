@@ -46,6 +46,14 @@ final class ProgramParser implements ProgramParserContract
     /**
      * @var non-empty-list<non-empty-string>
      */
+    private const array STABILIZER_KEYS = [
+        'is_stabilizer_used_source',
+        'is_stabilizer_used',
+    ];
+
+    /**
+     * @var non-empty-list<non-empty-string>
+     */
     private const array NUMBER_AND_RANK_NUMBER_KEYS = [
         'number',
         'rank_number_source',
@@ -198,6 +206,28 @@ final class ProgramParser implements ProgramParserContract
             $this->converter->toString($subtitleSource),
             $this->converter->toString($distanceSource),
             $this->converter->toInt($distanceSource),
+        ]);
+    }
+
+    /**
+     * @param ?string $value
+     * @return array{
+     *     is_stabilizer_used_source: ?string,
+     *     is_stabilizer_used: ?bool,
+     * }
+     */
+    #[\Override]
+    public function parseStabilizer(?string $value): array
+    {
+        if ($value === null) {
+            return array_fill_keys(self::STABILIZER_KEYS, null);
+        }
+
+        $stabilizerSource = preg_match('/\S*安定板\S*/u', $value, $matches) === 1 ? $matches[0] : null;
+
+        return array_combine(self::STABILIZER_KEYS, [
+            $stabilizerSource,
+            $stabilizerSource !== null,
         ]);
     }
 

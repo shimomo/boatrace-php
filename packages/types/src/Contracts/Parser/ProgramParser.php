@@ -31,6 +31,12 @@ interface ProgramParser extends Parser
      * @param ?string $value
      * @return array<non-empty-string, mixed>
      */
+    public function parseStabilizer(?string $value): array;
+
+    /**
+     * @param ?string $value
+     * @return array<non-empty-string, mixed>
+     */
     public function parseNumberAndRankNumber(?string $value): array;
 
     /**
