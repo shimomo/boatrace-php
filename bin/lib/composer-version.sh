@@ -54,6 +54,23 @@ composer_version_update_package_requires() {
   done
 }
 
+# composer_version_update_package_readmes VERSION
+#
+# packages/*/README.md の Requirements に並ぶ `- boatrace/<name>: <制約>` を
+# `^VERSION` に更新する。composer.json だけ上げると README が取り残され、
+# 0.2.0 のリリースで実際に `^0.1` のまま配布された。
+composer_version_update_package_readmes() {
+  version="$1"
+
+  for dir in packages/*; do
+    f="$dir/README.md"
+    [ -f "$f" ] || continue
+
+    sed -E "s#^(- boatrace/[a-z-]+: ).*\$#\\1^$version#" "$f" > "$f.tmp"
+    mv "$f.tmp" "$f"
+  done
+}
+
 # composer_version_update_branch_alias VERSION
 #
 # 各 packages/*/composer.json の extra.branch-alias.dev-main を
@@ -113,6 +130,7 @@ composer_version_release() {
   version="$1"
 
   composer_version_update_package_requires "$version"
+  composer_version_update_package_readmes "$version"
   composer_version_update_branch_alias "$version"
   composer_version_sync_monorepo
 }

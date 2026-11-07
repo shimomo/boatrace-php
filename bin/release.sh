@@ -69,7 +69,7 @@ composer_version_release "$version"
 # ---------------------------------------------------------------------------
 # ここでコミットしておかないと、後続の subtree split に
 # バージョン更新が含まれないまま各パッケージへ配布されてしまう。
-git add composer.json packages/*/composer.json
+git add composer.json packages/*/composer.json packages/*/README.md
 
 if ! git diff --cached --quiet; then
   git commit -m "chore: prepare release $version"
