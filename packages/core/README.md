@@ -11,7 +11,7 @@ Boatrace Core は、`boatrace/*` パッケージ群が共有する PHP-DI コン
 ## 📦 Requirements
 
 - php: ^8.4
-- boatrace/types: ^0.1
+- boatrace/types: ^0.2.0
 - php-di/php-di: ^7.0
 - symfony/browser-kit: ^8.0
 

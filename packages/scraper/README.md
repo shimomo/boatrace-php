@@ -9,9 +9,9 @@ Boatrace Scraper は、ボートレースの公式サイトから開催場、出
 ## 📦 Requirements
 
 - php: ^8.4
-- boatrace/core: ^0.1
-- boatrace/support: ^0.1
-- boatrace/types: ^0.1
+- boatrace/core: ^0.2.0
+- boatrace/support: ^0.2.0
+- boatrace/types: ^0.2.0
 - nesbot/carbon: ^3.8.4
 - symfony/browser-kit: ^8.0
 - symfony/css-selector: ^8.0

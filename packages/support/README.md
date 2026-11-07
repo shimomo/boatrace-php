@@ -11,8 +11,8 @@ Boatrace Support は、`boatrace/*` パッケージ群が共有する汎用モ�
 ## 📦 Requirements
 
 - php: ^8.4
-- boatrace/core: ^0.1
-- boatrace/types: ^0.1
+- boatrace/core: ^0.2.0
+- boatrace/types: ^0.2.0
 - symfony/browser-kit: ^8.0
 - symfony/console: ^8.0
 - symfony/css-selector: ^8.0

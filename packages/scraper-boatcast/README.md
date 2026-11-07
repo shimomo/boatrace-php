@@ -13,9 +13,9 @@ Boatrace Scraper Boatcast は、ボートキャスト（BOATCAST）からオリ�
 ## 📦 Requirements
 
 - php: ^8.4
-- boatrace/core: ^0.1
-- boatrace/support: ^0.1
-- boatrace/types: ^0.1
+- boatrace/core: ^0.2.0
+- boatrace/support: ^0.2.0
+- boatrace/types: ^0.2.0
 - nesbot/carbon: ^3.8.4
 - symfony/browser-kit: ^8.0
 - symfony/http-client: ^8.0
