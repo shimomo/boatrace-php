@@ -30,6 +30,8 @@ final class ProgramScraperDataProvider
             ['key' => 'distance', 'expected' => 1800],
             ['key' => 'is_stabilizer_used_source', 'expected' => null],
             ['key' => 'is_stabilizer_used', 'expected' => false],
+            ['key' => 'is_course_fixed_source', 'expected' => null],
+            ['key' => 'is_course_fixed', 'expected' => false],
             ['key' => 'day_number_source', 'expected' => '4日目'],
             ['key' => 'day_number', 'expected' => 4],
         ];

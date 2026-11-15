@@ -54,6 +54,14 @@ final class ProgramParser implements ProgramParserContract
     /**
      * @var non-empty-list<non-empty-string>
      */
+    private const array COURSE_FIXED_KEYS = [
+        'is_course_fixed_source',
+        'is_course_fixed',
+    ];
+
+    /**
+     * @var non-empty-list<non-empty-string>
+     */
     private const array NUMBER_AND_RANK_NUMBER_KEYS = [
         'number',
         'rank_number_source',
@@ -228,6 +236,28 @@ final class ProgramParser implements ProgramParserContract
         return array_combine(self::STABILIZER_KEYS, [
             $stabilizerSource,
             $stabilizerSource !== null,
+        ]);
+    }
+
+    /**
+     * @param ?string $value
+     * @return array{
+     *     is_course_fixed_source: ?string,
+     *     is_course_fixed: ?bool,
+     * }
+     */
+    #[\Override]
+    public function parseCourseFixed(?string $value): array
+    {
+        if ($value === null) {
+            return array_fill_keys(self::COURSE_FIXED_KEYS, null);
+        }
+
+        $courseFixedSource = preg_match('/\S*進入固定\S*/u', $value, $matches) === 1 ? $matches[0] : null;
+
+        return array_combine(self::COURSE_FIXED_KEYS, [
+            $courseFixedSource,
+            $courseFixedSource !== null,
         ]);
     }
 

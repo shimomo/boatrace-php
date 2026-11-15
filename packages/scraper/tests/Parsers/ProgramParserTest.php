@@ -178,6 +178,58 @@ final class ProgramParserTest extends TestCase
      * @return void
      */
     #[Test]
+    public function parseCourseFixedReturnsTrueWhenLabelIsPrinted(): void
+    {
+        $this->assertSame(
+            ['is_course_fixed_source' => '進入固定', 'is_course_fixed' => true],
+            $this->programParser->parseCourseFixed('進入固定')
+        );
+    }
+
+    /**
+     * @return void
+     */
+    #[Test]
+    public function parseCourseFixedPicksOnlyTheCourseFixedLabel(): void
+    {
+        $this->assertSame(
+            ['is_course_fixed_source' => '進入固定', 'is_course_fixed' => true],
+            $this->programParser->parseCourseFixed("進入固定\n\t\t\t安定板使用")
+        );
+    }
+
+    /**
+     * @return void
+     */
+    #[Test]
+    public function parseCourseFixedReturnsFalseWhenLabelsAreEmpty(): void
+    {
+        $this->assertSame(
+            ['is_course_fixed_source' => null, 'is_course_fixed' => false],
+            $this->programParser->parseCourseFixed('')
+        );
+        $this->assertSame(
+            ['is_course_fixed_source' => null, 'is_course_fixed' => false],
+            $this->programParser->parseCourseFixed('安定板使用')
+        );
+    }
+
+    /**
+     * @return void
+     */
+    #[Test]
+    public function parseCourseFixedReturnsNullWhenLabelsAreMissing(): void
+    {
+        $this->assertSame(
+            ['is_course_fixed_source' => null, 'is_course_fixed' => null],
+            $this->programParser->parseCourseFixed(null)
+        );
+    }
+
+    /**
+     * @return void
+     */
+    #[Test]
     public function throwsBadMethodCallExceptionWhenCallingUndefinedMethod(): void
     {
         $this->expectException(BadMethodCallException::class);

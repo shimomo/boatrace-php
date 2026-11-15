@@ -136,6 +136,8 @@ Array
     [distance] => 1800
     [is_stabilizer_used_source] =>
     [is_stabilizer_used] =>
+    [is_course_fixed_source] =>
+    [is_course_fixed] =>
     [day_number_source] => 4日目
     [day_number] => 4
     [racers] => Array

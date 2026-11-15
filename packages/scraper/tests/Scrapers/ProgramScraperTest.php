@@ -144,4 +144,48 @@ final class ProgramScraperTest extends TestCase
         $this->assertNull($response['is_stabilizer_used_source']);
         $this->assertNull($response['is_stabilizer_used']);
     }
+
+    /**
+     * @return void
+     */
+    #[Test]
+    public function scrapeReturnsCourseFixedWhenLabelIsPrinted(): void
+    {
+        $response = ScraperFactory::createProgramScraper()
+            ->scrape('2026-08-01', 8, 1, MockBrowser::create('program-course-fixed.html'));
+
+        $this->assertSame('進入固定', $response['is_course_fixed_source']);
+        $this->assertTrue($response['is_course_fixed']);
+        $this->assertNull($response['is_stabilizer_used_source']);
+        $this->assertFalse($response['is_stabilizer_used']);
+    }
+
+    /**
+     * @return void
+     */
+    #[Test]
+    public function scrapeReturnsBothLabelsWhenBothArePrinted(): void
+    {
+        $response = ScraperFactory::createProgramScraper()
+            ->scrape('2026-03-03', 24, 1, MockBrowser::create('program-course-fixed-stabilizer.html'));
+
+        $this->assertSame('安定板使用', $response['is_stabilizer_used_source']);
+        $this->assertTrue($response['is_stabilizer_used']);
+        $this->assertSame('進入固定', $response['is_course_fixed_source']);
+        $this->assertTrue($response['is_course_fixed']);
+    }
+
+    /**
+     * @return void
+     */
+    #[Test]
+    public function scrapeReturnsNullCourseFixedWhenLabelsAreMissing(): void
+    {
+        $response = ScraperFactory::createProgramScraper()
+            ->scrape('2026-08-01', 22, 1, MockBrowser::create('stadium.html'));
+
+        $this->assertArrayHasKey('is_course_fixed', $response);
+        $this->assertNull($response['is_course_fixed_source']);
+        $this->assertNull($response['is_course_fixed']);
+    }
 }

@@ -144,10 +144,11 @@ final class ProgramScraper implements ProgramScraperContract
         $subtitleAndDistanceSource = $this->filter->byXPath($scraper, $subtitleAndDistanceXPath);
         $subtitleAndDistance = $this->programParser->parseSubtitleAndDistance($subtitleAndDistanceSource);
 
-        $stabilizerFormat = '%s/div[2]/div[%d]/div';
-        $stabilizerXPath = sprintf($stabilizerFormat, self::BASE_XPATH, $baseLevel + 3);
-        $stabilizerSource = $this->filter->byXPath($scraper, $stabilizerXPath);
-        $stabilizer = $this->programParser->parseStabilizer($stabilizerSource);
+        $labelsFormat = '%s/div[2]/div[%d]/div';
+        $labelsXPath = sprintf($labelsFormat, self::BASE_XPATH, $baseLevel + 3);
+        $labelsSource = $this->filter->byXPath($scraper, $labelsXPath);
+        $stabilizer = $this->programParser->parseStabilizer($labelsSource);
+        $courseFixed = $this->programParser->parseCourseFixed($labelsSource);
 
         $response = [];
 
@@ -160,6 +161,7 @@ final class ProgramScraper implements ProgramScraperContract
         $response += $title;
         $response += $subtitleAndDistance;
         $response += $stabilizer;
+        $response += $courseFixed;
 
         $response += $this->resolveDayNumber($scraper);
         $response += $this->scrapeRacers($scraper, $baseLevel);
