@@ -54,7 +54,7 @@ final class ProgramParser implements ProgramParserContract
     /**
      * @var non-empty-list<non-empty-string>
      */
-    private const array COURSE_FIXED_KEYS = [
+    private const array FIXED_COURSE_KEYS = [
         'is_course_fixed_source',
         'is_course_fixed',
     ];
@@ -247,17 +247,17 @@ final class ProgramParser implements ProgramParserContract
      * }
      */
     #[\Override]
-    public function parseCourseFixed(?string $value): array
+    public function parseFixedCourse(?string $value): array
     {
         if ($value === null) {
-            return array_fill_keys(self::COURSE_FIXED_KEYS, null);
+            return array_fill_keys(self::FIXED_COURSE_KEYS, null);
         }
 
-        $courseFixedSource = preg_match('/\S*進入固定\S*/u', $value, $matches) === 1 ? $matches[0] : null;
+        $fixedCourseSource = preg_match('/\S*進入固定\S*/u', $value, $matches) === 1 ? $matches[0] : null;
 
-        return array_combine(self::COURSE_FIXED_KEYS, [
-            $courseFixedSource,
-            $courseFixedSource !== null,
+        return array_combine(self::FIXED_COURSE_KEYS, [
+            $fixedCourseSource,
+            $fixedCourseSource !== null,
         ]);
     }
 

@@ -178,11 +178,11 @@ final class ProgramParserTest extends TestCase
      * @return void
      */
     #[Test]
-    public function parseCourseFixedReturnsTrueWhenLabelIsPrinted(): void
+    public function parseFixedCourseReturnsTrueWhenLabelIsPrinted(): void
     {
         $this->assertSame(
             ['is_course_fixed_source' => '進入固定', 'is_course_fixed' => true],
-            $this->programParser->parseCourseFixed('進入固定')
+            $this->programParser->parseFixedCourse('進入固定')
         );
     }
 
@@ -190,11 +190,11 @@ final class ProgramParserTest extends TestCase
      * @return void
      */
     #[Test]
-    public function parseCourseFixedPicksOnlyTheCourseFixedLabel(): void
+    public function parseFixedCoursePicksOnlyTheFixedCourseLabel(): void
     {
         $this->assertSame(
             ['is_course_fixed_source' => '進入固定', 'is_course_fixed' => true],
-            $this->programParser->parseCourseFixed("進入固定\n\t\t\t安定板使用")
+            $this->programParser->parseFixedCourse("進入固定\n\t\t\t安定板使用")
         );
     }
 
@@ -202,15 +202,15 @@ final class ProgramParserTest extends TestCase
      * @return void
      */
     #[Test]
-    public function parseCourseFixedReturnsFalseWhenLabelsAreEmpty(): void
+    public function parseFixedCourseReturnsFalseWhenLabelsAreEmpty(): void
     {
         $this->assertSame(
             ['is_course_fixed_source' => null, 'is_course_fixed' => false],
-            $this->programParser->parseCourseFixed('')
+            $this->programParser->parseFixedCourse('')
         );
         $this->assertSame(
             ['is_course_fixed_source' => null, 'is_course_fixed' => false],
-            $this->programParser->parseCourseFixed('安定板使用')
+            $this->programParser->parseFixedCourse('安定板使用')
         );
     }
 
@@ -218,11 +218,11 @@ final class ProgramParserTest extends TestCase
      * @return void
      */
     #[Test]
-    public function parseCourseFixedReturnsNullWhenLabelsAreMissing(): void
+    public function parseFixedCourseReturnsNullWhenLabelsAreMissing(): void
     {
         $this->assertSame(
             ['is_course_fixed_source' => null, 'is_course_fixed' => null],
-            $this->programParser->parseCourseFixed(null)
+            $this->programParser->parseFixedCourse(null)
         );
     }
 

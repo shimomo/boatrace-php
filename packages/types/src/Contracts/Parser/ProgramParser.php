@@ -37,7 +37,7 @@ interface ProgramParser extends Parser
      * @param ?string $value
      * @return array<non-empty-string, mixed>
      */
-    public function parseCourseFixed(?string $value): array;
+    public function parseFixedCourse(?string $value): array;
 
     /**
      * @param ?string $value

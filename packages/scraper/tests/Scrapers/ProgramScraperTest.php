@@ -149,7 +149,7 @@ final class ProgramScraperTest extends TestCase
      * @return void
      */
     #[Test]
-    public function scrapeReturnsCourseFixedWhenLabelIsPrinted(): void
+    public function scrapeReturnsFixedCourseWhenLabelIsPrinted(): void
     {
         $response = ScraperFactory::createProgramScraper()
             ->scrape('2026-08-01', 8, 1, MockBrowser::create('program-course-fixed.html'));
@@ -179,7 +179,7 @@ final class ProgramScraperTest extends TestCase
      * @return void
      */
     #[Test]
-    public function scrapeReturnsNullCourseFixedWhenLabelsAreMissing(): void
+    public function scrapeReturnsNullFixedCourseWhenLabelsAreMissing(): void
     {
         $response = ScraperFactory::createProgramScraper()
             ->scrape('2026-08-01', 22, 1, MockBrowser::create('stadium.html'));
