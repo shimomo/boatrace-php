@@ -17,8 +17,6 @@ indent_size = 2
 [*.{yml,yaml}]
 indent_size = 2
 
-# フィクスチャは実ページ・実ファイルの verbatim コピー。
-# CRLF（ボートキャストの TSV）・行末空白・末尾改行なしをそのまま保つ
 [**/tests/fixtures/**]
 end_of_line = unset
 insert_final_newline = false
