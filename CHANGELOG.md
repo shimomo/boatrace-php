@@ -2,6 +2,17 @@
 
 ## Unreleased
 
+## [0.3.0] - 2026-11-15
+
+- ci: capitalize Composer in the audit step name
+- chore: drop the comment on the fixture section in .editorconfig
+- refactor: rename parseCourseFixed to parseFixedCourse in the program parser
+- feat: return whether the course entry is fixed from the program scraper
+- chore: update package README requirements during releases
+- docs: bump boatrace/* requirements in package READMEs to ^0.2.0
+- chore: update CHANGELOG.md
+
+
 ## [0.2.0] - 2026-10-30
 
 - feat: return whether the stabilizer was used from the program scraper
