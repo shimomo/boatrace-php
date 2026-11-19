@@ -23,7 +23,7 @@
         "ergebnis/composer-normalize": "^2.52",
         "laravel/pint": "^1.27",
         "phpunit/phpunit": "^13.2",
-        "vimeo/psalm": "^6.0"
+        "vimeo/psalm": "^7.0"
     },
     "replace": {
         "boatrace/core": "self.version",
