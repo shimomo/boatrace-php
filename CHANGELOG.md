@@ -12,7 +12,6 @@
 - docs: bump boatrace/* requirements in package READMEs to ^0.2.0
 - chore: update CHANGELOG.md
 
-
 ## [0.2.0] - 2026-10-30
 
 - feat: return whether the stabilizer was used from the program scraper
@@ -22,7 +21,6 @@
 - docs: add a README for the monorepo
 - chore: update CHANGELOG.md
 - fix: qualify the branch ref when pushing a split to an empty repository and hide signatures in changelog
-
 
 ## [0.1.0] - 2026-09-12
 

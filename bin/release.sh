@@ -8,8 +8,8 @@
 #   例: bin/release.sh 0.1.0
 #
 # 全体の流れ:
-#   1. CHANGELOG.md の "Unreleased" セクションに今回のバージョンを
-#      書き込み、対象コミット一覧を反映する
+#   1. CHANGELOG.md の "Unreleased" 見出しを今回のバージョンの見出しに
+#      置き換え、対象コミット一覧を書き込む
 #   2. packages/*/composer.json と ルート composer.json の
 #      バージョン関連フィールドを更新する
 #   3. 上記の変更を "chore: prepare release" としてコミット・push する
@@ -69,7 +69,9 @@ composer_version_release "$version"
 # ---------------------------------------------------------------------------
 # ここでコミットしておかないと、後続の subtree split に
 # バージョン更新が含まれないまま各パッケージへ配布されてしまう。
-git add composer.json packages/*/composer.json packages/*/README.md
+# CHANGELOG.md もここで入れる。外すと今回の節がステップ6のコミットへ
+# 落ち、タグの時点の CHANGELOG に自分の節が載らない。
+git add composer.json packages/*/composer.json packages/*/README.md CHANGELOG.md
 
 if ! git diff --cached --quiet; then
   git commit -m "chore: prepare release $version"

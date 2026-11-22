@@ -29,17 +29,21 @@ changelog_collect_commits() {
 
 # changelog_stamp_release VERSION COMMITS
 #
-# CHANGELOG.md の "## Unreleased" 見出しの直後に
-# "## [VERSION] - YYYY-MM-DD" ブロックを挿入し、
+# CHANGELOG.md の "## Unreleased" 見出しを
+# "## [VERSION] - YYYY-MM-DD" に置き換え、
 # その下に COMMITS（changelog_collect_commits の出力）を書き込む。
 #
-# 例: Unreleased の直後がこうなる
-#   ## Unreleased
-#
+# 例: "## Unreleased" の行がこうなる
 #   ## [0.1.0] - 2026-09-10
 #
 #   - feat: foo
 #   - fix: bar
+#
+# 見出しは残さない。タグの時点の CHANGELOG に空の "Unreleased" を
+# 載せないためで、復元は changelog_ensure_unreleased_heading が
+# タグの後に別コミットで行う。
+# 箇条書きの後ろに空行を出さないこと。見出しの直後にもともと空行が
+# あるので、出すと節の間が2行空く。
 #
 # 注意: "## Unreleased" 見出しが存在しない場合は何も変化しない
 #       （= リリースバージョンが追記されない）ので、
@@ -50,12 +54,9 @@ changelog_stamp_release() {
 
   awk -v commits="$commits" -v version="$version" '
     /^## Unreleased$/ {
-      print
-      print ""
       print "## [" version "] - " strftime("%Y-%m-%d")
       print ""
       print commits
-      print ""
       next
     }
     { print }
