@@ -13,5 +13,4 @@ use Boatrace\Types\Contracts\Core\CoreDispatcher as CoreDispatcherContract;
 final class CoreDispatcher implements CoreDispatcherContract
 {
     use RejectsUndefinedCalls;
-
 }
