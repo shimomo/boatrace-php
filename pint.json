@@ -28,6 +28,6 @@
         "return_type_declaration": true,
         "no_empty_statement": true,
         "single_line_comment_spacing": true,
-        "no_extra_blank_lines": true
+        "no_extra_blank_lines": { "tokens": ["extra", "curly_brace_block"] }
     }
 }
