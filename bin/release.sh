@@ -34,6 +34,15 @@ set -eu
 
 version="${1:?Usage: bin/release.sh <version>}"
 
+# 同じバージョンのタグが既にあるなら、何も変えないうちに止める。
+# 放っておいてもステップ4の git tag で落ちるが、その時点では CHANGELOG の節と
+# prepare release のコミットがもう push されている（途中で止まったリリースを
+# 同じバージョンで回し直すと、空の節が二重に書かれる）。
+if git rev-parse -q --verify "refs/tags/$version" > /dev/null; then
+  echo "Tag $version already exists." >&2
+  exit 1
+fi
+
 script_dir=$(cd "$(dirname "$0")" && pwd)
 
 # shellcheck source=lib/changelog.sh
@@ -50,6 +59,12 @@ script_dir=$(cd "$(dirname "$0")" && pwd)
 # ---------------------------------------------------------------------------
 # 直前のタグ以降のコミットだけを対象にする。
 # タグが一つも無い場合（プロジェクト初回リリース）は全コミットを対象にする。
+#
+# 先に "## Unreleased" 見出しを保証する。前回のリリースがタグの後で止まると
+# ステップ6が走らず見出しが戻らないままになり、changelog_stamp_release は
+# 置き換える相手が無いので何も書かずに通ってしまう。
+changelog_ensure_unreleased_heading
+
 last_tag=$(git describe --tags --abbrev=0 2>/dev/null || echo '')
 commits=$(changelog_collect_commits "$last_tag")
 changelog_stamp_release "$version" "$commits"
