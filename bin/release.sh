@@ -22,6 +22,12 @@
 #   6. CHANGELOG.md に次回リリース用の "Unreleased" 見出しを復元し、
 #      別コミットとして push する
 #
+# 途中で止まったら、同じバージョンでもう一度流す。
+#   - タグの前で止まった場合は、最初からやり直す（prepare release のコミットが
+#     もうあれば、その節を使い回す）
+#   - タグの後で止まった場合は、続きから再開する（1〜4 を飛ばし、まだタグの
+#     無い独立リポジトリだけへ配信して、6 を済ませる）
+#
 # 依存:
 #   - bin/lib/changelog.sh         CHANGELOG.md の読み書き関数
 #   - bin/lib/composer-merge.sh    packages/* の require/autoload等を
@@ -42,6 +48,31 @@ version="${1:?Usage: bin/release.sh <version>}"
 # prepare release のコミットへ巻き込まれる。
 # グロブを展開させるので、使うときはクオートしない。
 release_files='composer.json packages/*/composer.json packages/*/README.md CHANGELOG.md'
+
+script_dir=$(cd "$(dirname "$0")" && pwd)
+
+# shellcheck source=lib/changelog.sh
+. "$script_dir/lib/changelog.sh"
+# shellcheck source=lib/composer-merge.sh
+. "$script_dir/lib/composer-merge.sh"
+# shellcheck source=lib/composer-version.sh
+. "$script_dir/lib/composer-version.sh"
+# shellcheck source=lib/package-release.sh
+. "$script_dir/lib/package-release.sh"
+
+# release_is_complete VERSION
+#
+# VERSION のリリースが最後まで済んでいれば成功を返す。済んでいるとは、
+# origin の main の CHANGELOG に "## Unreleased" が戻っていて（ステップ6）、
+# すべてのパッケージの独立リポジトリにタグがあること（ステップ5）。
+# 事前チェックの git fetch の後で呼ぶ（origin/main が古いと見誤る）。
+release_is_complete() {
+  git show origin/main:CHANGELOG.md | grep -q '^## Unreleased$' || return 1
+
+  for directory in packages/*; do
+    package_release_is_published "$1" "$directory" || return 1
+  done
+}
 
 # ---------------------------------------------------------------------------
 # 0. 始める前の検査
@@ -91,25 +122,28 @@ if ! git merge-base --is-ancestor origin/main HEAD; then
   exit 1
 fi
 
-# 同じバージョンのタグが既にあるなら止める。
-# 放っておいてもステップ4の git tag で落ちるが、その時点では CHANGELOG の節と
-# prepare release のコミットがもう push されている（途中で止まったリリースを
-# 同じバージョンで回し直すと、空の節が二重に書かれる）。
+# 同じバージョンのタグが既にあるとき。
+#
+# タグの後で止まった今回のリリースなら、続きから再開する。そう言えるのは、
+# タグが今回の prepare release のコミットに打たれていて、それが HEAD の履歴に
+# あり、まだ済んでいない手順が残っているときだけ。
+#
+# それ以外（出し終えたバージョンをもう一度指定した・別のコミットに同じ名前の
+# タグがある）は、何も変えずに止める。放っておいてもステップ4の git tag で
+# 落ちるが、その時点では CHANGELOG の節と prepare release のコミットがもう
+# push されている。
+resuming=0
 if git rev-parse -q --verify "refs/tags/$version" > /dev/null; then
-  echo "Tag $version already exists." >&2
-  exit 1
+  if [ "$(git log --no-show-signature -1 --format=%s "$version^{commit}")" != "chore: prepare release $version" ] \
+    || ! git merge-base --is-ancestor "$version^{commit}" HEAD \
+    || release_is_complete "$version"; then
+    echo "Tag $version already exists." >&2
+    exit 1
+  fi
+
+  resuming=1
+  echo "==> Resuming release $version"
 fi
-
-script_dir=$(cd "$(dirname "$0")" && pwd)
-
-# shellcheck source=lib/changelog.sh
-. "$script_dir/lib/changelog.sh"
-# shellcheck source=lib/composer-merge.sh
-. "$script_dir/lib/composer-merge.sh"
-# shellcheck source=lib/composer-version.sh
-. "$script_dir/lib/composer-version.sh"
-# shellcheck source=lib/package-release.sh
-. "$script_dir/lib/package-release.sh"
 
 # ---------------------------------------------------------------------------
 # 1. CHANGELOG.md に今回バージョンのセクションを書き込む
@@ -120,7 +154,11 @@ script_dir=$(cd "$(dirname "$0")" && pwd)
 last_tag=$(git describe --tags --abbrev=0 2>/dev/null || echo '')
 commits=$(changelog_collect_commits "$last_tag" "$version")
 
-if changelog_has_release "$version"; then
+if [ "$resuming" -eq 1 ]; then
+  # 再開のときは書かない。節はタグの時点でもう入っている。直前のタグが
+  # 今回のバージョン自身になっているので、集め直した箇条書きとは合わない。
+  :
+elif changelog_has_release "$version"; then
   # 今回のバージョンの節がもうある。タグを打つ前に止まった前回の試行が
   # 書いたものなので、書き足さずに使い回す。ここでもう一度書くと、
   # 節が二重になったまま公開まで進む。
@@ -148,7 +186,12 @@ fi
 #   - 各 packages/*/composer.json の branch-alias を `<major>.<minor>.x-dev` に更新
 #   - composer_version_sync_monorepo でルートへのマージ・依存関係・フォーマットを同期
 #   - ルート composer.json の `replace` は `self.version` なので触らない
-composer_version_release "$version"
+#
+# 再開のときは飛ばす。書き換えはタグの時点でもう入っていて、
+# composer update をもう一度走らせる理由が無い。
+if [ "$resuming" -eq 0 ]; then
+  composer_version_release "$version"
+fi
 
 # ---------------------------------------------------------------------------
 # 3. 変更をコミットしてpush
@@ -157,6 +200,10 @@ composer_version_release "$version"
 # バージョン更新が含まれないまま各パッケージへ配布されてしまう。
 # CHANGELOG.md もここで入れる（release_files に含めてある）。外すと今回の節が
 # ステップ6のコミットへ落ち、タグの時点の CHANGELOG に自分の節が載らない。
+#
+# 再開のときもここは通す。コミットするものは無いが、push は要る。
+# 前回がステップ6の push で止まっていた場合、見出しを戻すコミットは
+# ローカルにだけあり、ここで origin へ届く。
 # shellcheck disable=SC2086
 git add $release_files
 
@@ -169,7 +216,12 @@ git push origin main
 # ---------------------------------------------------------------------------
 # 4. ルートリポジトリにバージョンタグを打ってpush
 # ---------------------------------------------------------------------------
-git tag -s "$version" -m "release $version"
+# 再開のときは打ち直さない（タグはもうある）。push はやり直す。前回がタグの
+# push で止まっていた場合に届けるためで、届いていれば何も起きない。
+if [ "$resuming" -eq 0 ]; then
+  git tag -s "$version" -m "release $version"
+fi
+
 git push origin "$version"
 
 # ---------------------------------------------------------------------------
@@ -177,7 +229,16 @@ git push origin "$version"
 # ---------------------------------------------------------------------------
 # subtree split → force push → タグpush → GitHub Release作成 を
 # パッケージごとに実行する。詳細は package_release_publish 内のコメント参照。
+#
+# 再開のときは、前回の実行でもう公開できているパッケージを飛ばす。
+# 再開でないのに独立リポジトリへ同じタグがあるのは異常なので、飛ばさずに
+# package_release_publish のタグの push で落とす。
 for directory in packages/*; do
+  if [ "$resuming" -eq 1 ] && package_release_is_published "$version" "$directory"; then
+    echo "==> $(basename "$directory") (already published)"
+    continue
+  fi
+
   package_release_publish "$version" "$directory"
 done
 

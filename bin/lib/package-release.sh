@@ -8,6 +8,36 @@
 
 set -eu
 
+# package_release_is_published VERSION DIRECTORY
+#
+# そのパッケージの独立リポジトリに VERSION のタグがもうあれば成功を返す。
+# 途中で止まったリリースを再開するとき、公開済みのパッケージを飛ばすために使う。
+#
+# 「タグが無い」と「リポジトリに届かない」を取り違えないこと。
+# git ls-remote --exit-code は前者で 2、後者で 128 を返す。後者を未公開と読むと、
+# 届かないリポジトリへ公開をやり直そうとして、もっと先で落ちる。
+package_release_is_published() {
+  version="$1"
+  directory="$2"
+
+  package=$(basename "$directory")
+  repository="shimomo/boatrace-php-$package"
+  remote="git@github.com:$repository.git"
+
+  ls_remote_status=0
+  git ls-remote --exit-code --tags "$remote" "refs/tags/$version" > /dev/null \
+    || ls_remote_status=$?
+
+  case "$ls_remote_status" in
+    0) return 0 ;;
+    2) return 1 ;;
+    *)
+      echo "Could not read the tags of $repository." >&2
+      exit "$ls_remote_status"
+      ;;
+  esac
+}
+
 # package_release_publish VERSION DIRECTORY
 #
 # 1パッケージ分のリリース処理一式。
@@ -52,14 +82,23 @@ package_release_publish() {
     --jq .tagName 2>/dev/null || echo '')
 
   # --- 2. packages/<name> 配下だけの履歴を切り出す --------------------
+  # 途中で止まった前回の実行が、作業用のブランチと一時タグを残していることが
+  # ある。残っていると下の git tag が "already exists" で落ちるので、先に片付ける。
+  tmp_tag="pkg-${package}-${version}"
+  git tag -d "$tmp_tag" > /dev/null 2>&1 || true
+  git branch -D "split-$package" > /dev/null 2>&1 || true
+
+  # 切り出すのは HEAD ではなく VERSION のタグの位置。再開のときは HEAD が
+  # タグより先へ進んでいることがあり、HEAD から切り出すと、次のリリースに
+  # 入るはずの変更が VERSION として配られる。
   commit=$(git subtree split \
     --prefix="$directory" \
-    --branch="split-$package")
+    --branch="split-$package" \
+    "$version^{commit}")
 
   # --- 3. 切り出したコミットに署名付き一時タグを打つ -------------------
   # tmp_tag はあくまでローカル作業用の名前。リモートには
   # ステップ5で "refs/tags/${version}" という別名で push する。
-  tmp_tag="pkg-${package}-${version}"
   git tag -s "$tmp_tag" "$commit" -m "Release $version"
 
   # --- 4. 独立リポジトリの main を force push ------------------------
