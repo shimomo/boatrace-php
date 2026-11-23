@@ -443,4 +443,4 @@ Array
 
 ## 📄 License
 
-Boatrace Scraper は [MIT license](LICENSE) の元で公開されています。
+Boatrace Scraper は [MIT license](LICENSE) の下で公開されています。

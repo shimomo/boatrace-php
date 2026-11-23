@@ -76,4 +76,4 @@ $crawler = $httpBrowser->request('GET', 'https://www.boatrace.jp/owpc/pc/race/in
 
 ## 📄 License
 
-Boatrace Support は [MIT license](LICENSE) の元で公開されています。
+Boatrace Support は [MIT license](LICENSE) の下で公開されています。

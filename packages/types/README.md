@@ -122,4 +122,4 @@ Array
 
 ## 📄 License
 
-Boatrace Types は [MIT license](LICENSE) の元で公開されています。
+Boatrace Types は [MIT license](LICENSE) の下で公開されています。

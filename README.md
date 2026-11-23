@@ -79,4 +79,4 @@ composer normalize  # composer.json の整形
 
 ## 📄 ライセンス
 
-Boatrace は [MIT license](LICENSE) の元で公開されています。
+Boatrace は [MIT license](LICENSE) の下で公開されています。

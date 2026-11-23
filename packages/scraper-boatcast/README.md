@@ -300,4 +300,4 @@ Array
 
 ## 📄 License
 
-Boatrace Scraper Boatcast は [MIT license](LICENSE) の元で公開されています。
+Boatrace Scraper Boatcast は [MIT license](LICENSE) の下で公開されています。

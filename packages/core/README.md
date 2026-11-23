@@ -91,4 +91,4 @@ facade / dispatcher / response の定型処理を trait として提供します
 
 ## 📄 License
 
-Boatrace Core は [MIT license](LICENSE) の元で公開されています。
+Boatrace Core は [MIT license](LICENSE) の下で公開されています。
