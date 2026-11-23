@@ -74,6 +74,32 @@ release_is_complete() {
   done
 }
 
+# release_discard_unfinished STATUS
+#
+# 途中で止まったとき（STATUS が 0 以外）、リリースが書きかけたファイルを
+# 始める前の状態へ戻す。残しておくと次の実行が事前チェックで止まり、
+# 手で捨てることになる。
+#
+# 戻すのは HEAD の内容へ、なので、コミット済みのものには触れない。
+# prepare release のコミットの後で止まった場合、そのコミットは残る。
+#
+# jq や awk が書き出す途中のファイルも消す。*.tmp は .gitignore の対象で、
+# 残っていても git status には出ない。
+release_discard_unfinished() {
+  if [ "$1" -ne 0 ]; then
+    # shellcheck disable=SC2086
+    if [ -n "$(git status --porcelain --untracked-files=no -- $release_files)" ]; then
+      git restore --staged --worktree -- $release_files || true
+      echo 'Release stopped. The files it had started to rewrite were put back.' >&2
+    fi
+
+    rm -f CHANGELOG_NEW.md composer.json.tmp \
+      packages/*/composer.json.tmp packages/*/README.md.tmp
+  fi
+
+  exit "$1"
+}
+
 # ---------------------------------------------------------------------------
 # 0. 始める前の検査
 # ---------------------------------------------------------------------------
@@ -99,14 +125,15 @@ fi
 
 # リリースがコミットするファイルに、未コミットの変更が無いこと。ステップ3の
 # git add がそのまま拾い、prepare release のコミットに混ざって分割先まで
-# 配られる。コミットの前で止まったリリースの書きかけも、ここで止まる。
+# 配られる。途中で止まったリリースは書きかけを自分で戻すが、強制終了された
+# ときは残ることがあり、それもここで止まる。
 # shellcheck disable=SC2086
 dirty=$(git status --porcelain --untracked-files=all -- $release_files)
 if [ -n "$dirty" ]; then
   {
     echo 'These files have uncommitted changes that the release commit would pick up:'
     echo "$dirty"
-    echo 'Commit them, or discard them (an interrupted release leaves its edits behind):'
+    echo 'Commit them, or discard them (a release that was killed can leave its edits behind):'
     echo "  git restore --staged --worktree -- $release_files"
   } >&2
   exit 1
@@ -144,6 +171,18 @@ if git rev-parse -q --verify "refs/tags/$version" > /dev/null; then
   resuming=1
   echo "==> Resuming release $version"
 fi
+
+# ここから先で止まったら、書きかけたファイルを元へ戻す。
+#
+# 事前チェックより前に仕掛けないこと。未コミットの変更が無いと確かめる前に
+# 戻すと、手元の作業を消す。
+#
+# シグナルは exit に読み替える。dash はシグナルで落ちるときに EXIT の
+# トラップを呼ばないので、そのままだと Ctrl-C で書きかけが残る。
+trap 'release_discard_unfinished "$?"' EXIT
+trap 'exit 130' INT
+trap 'exit 143' TERM
+trap 'exit 129' HUP
 
 # ---------------------------------------------------------------------------
 # 1. CHANGELOG.md に今回バージョンのセクションを書き込む
