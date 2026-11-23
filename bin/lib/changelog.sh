@@ -85,11 +85,14 @@ changelog_stamp_release() {
   version="$1"
   commits="$2"
 
-  awk -v commits="$commits" -v version="$version" '
+  # 値は -v ではなく環境変数で渡す。-v は値の中のバックスラッシュを
+  # エスケープとして解釈するので、件名の "Boatrace\Core\Foo" が
+  # "BoatraceCoreFoo" に、"\t" がタブに、"\n" が改行になる。
+  commits="$commits" version="$version" awk '
     /^## Unreleased$/ {
-      print "## [" version "] - " strftime("%Y-%m-%d")
+      print "## [" ENVIRON["version"] "] - " strftime("%Y-%m-%d")
       print ""
-      print commits
+      print ENVIRON["commits"]
       next
     }
     { print }
