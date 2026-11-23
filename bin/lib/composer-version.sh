@@ -114,6 +114,7 @@ composer_version_update_branch_alias() {
 #      （旧 `monorepo-builder merge` 相当）
 #   2. composer update でロックファイルを同期
 #   3. composer normalize でフォーマットを整える
+#      （ルートと、packages/* の composer.json の両方）
 #
 # インデントは 4 スペースに固定する。jq は既存のインデントを保たず
 # 既定の 2 スペースで書き出し、composer normalize は既存のインデントを
@@ -124,6 +125,20 @@ composer_version_sync_monorepo() {
   composer_merge_packages_into_root
   composer update
   composer normalize --indent-size=4 --indent-style=space
+
+  # パッケージ側も整える。jq は新しいキーを末尾に足すので、extra を持たない
+  # パッケージに branch-alias を足すと "$schema" の後ろに付き、CI の Lint
+  # （composer normalize --dry-run）が落ちる形のまま配られる。
+  #
+  # ロックファイルの検査と更新は切る。パッケージのディレクトリに composer.lock が
+  # 残っていても（.gitignore の対象で、気付きにくい）、それには付き合わない。
+  for dir in packages/*; do
+    f="$dir/composer.json"
+    [ -f "$f" ] || continue
+
+    composer normalize --indent-size=4 --indent-style=space \
+      --no-check-lock --no-update-lock "$f"
+  done
 }
 
 # composer_version_release VERSION
