@@ -64,7 +64,8 @@ script_dir=$(cd "$(dirname "$0")" && pwd)
 #
 # VERSION のリリースが最後まで済んでいれば成功を返す。済んでいるとは、
 # origin の main の CHANGELOG に "## Unreleased" が戻っていて（ステップ6）、
-# すべてのパッケージの独立リポジトリにタグがあること（ステップ5）。
+# すべてのパッケージの独立リポジトリにタグと GitHub Release があること
+# （ステップ5）。
 # 事前チェックの git fetch の後で呼ぶ（origin/main が古いと見誤る）。
 release_is_complete() {
   git show origin/main:CHANGELOG.md | grep -q '^## Unreleased$' || return 1
@@ -269,16 +270,10 @@ git push origin "$version"
 # subtree split → force push → タグpush → GitHub Release作成 を
 # パッケージごとに実行する。詳細は package_release_publish 内のコメント参照。
 #
-# 再開のときは、前回の実行でもう公開できているパッケージを飛ばす。
-# 再開でないのに独立リポジトリへ同じタグがあるのは異常なので、飛ばさずに
-# package_release_publish のタグの push で落とす。
+# 再開のときは、前回の実行でもう済んでいる手順（タグの push・GitHub Release の
+# 作成）を、パッケージごとに飛ばす。
 for directory in packages/*; do
-  if [ "$resuming" -eq 1 ] && package_release_is_published "$version" "$directory"; then
-    echo "==> $(basename "$directory") (already published)"
-    continue
-  fi
-
-  package_release_publish "$version" "$directory"
+  package_release_publish "$version" "$directory" "$resuming"
 done
 
 # ---------------------------------------------------------------------------
