@@ -10,6 +10,7 @@
 # 全体の流れ:
 #   1. CHANGELOG.md の "Unreleased" 見出しを今回のバージョンの見出しに
 #      置き換え、対象コミット一覧を書き込む
+#      （途中で止まった前回の試行の節がもうあれば、それを使い回す）
 #   2. packages/*/composer.json と ルート composer.json の
 #      バージョン関連フィールドを更新する
 #   3. 上記の変更を "chore: prepare release" としてコミット・push する
@@ -60,14 +61,28 @@ script_dir=$(cd "$(dirname "$0")" && pwd)
 # 直前のタグ以降のコミットだけを対象にする。
 # タグが一つも無い場合（プロジェクト初回リリース）は全コミットを対象にする。
 #
-# 先に "## Unreleased" 見出しを保証する。前回のリリースがタグの後で止まると
-# ステップ6が走らず見出しが戻らないままになり、changelog_stamp_release は
-# 置き換える相手が無いので何も書かずに通ってしまう。
-changelog_ensure_unreleased_heading
-
 last_tag=$(git describe --tags --abbrev=0 2>/dev/null || echo '')
-commits=$(changelog_collect_commits "$last_tag")
-changelog_stamp_release "$version" "$commits"
+commits=$(changelog_collect_commits "$last_tag" "$version")
+
+if changelog_has_release "$version"; then
+  # 今回のバージョンの節がもうある。タグを打つ前に止まった前回の試行が
+  # 書いたものなので、書き足さずに使い回す。ここでもう一度書くと、
+  # 節が二重になったまま公開まで進む。
+  #
+  # 使い回すのは、載っている箇条書きがいま集めたものと同じときだけ。
+  # 試行の間にコミットが増えていると、それを載せないままタグを打つことになる。
+  if [ "$(changelog_release_commits "$version")" != "$commits" ]; then
+    echo "CHANGELOG.md already has a section for $version that does not match the commits since ${last_tag:-the first commit}." >&2
+    echo "Remove that section (git restore CHANGELOG.md if it is uncommitted) and run again." >&2
+    exit 1
+  fi
+else
+  # 先に "## Unreleased" 見出しを保証する。前回のリリースがタグの後で止まると
+  # ステップ6が走らず見出しが戻らないままになり、changelog_stamp_release は
+  # 置き換える相手が無いので何も書かずに通ってしまう。
+  changelog_ensure_unreleased_heading
+  changelog_stamp_release "$version" "$commits"
+fi
 
 # ---------------------------------------------------------------------------
 # 2. composer.json 群のバージョン情報を更新

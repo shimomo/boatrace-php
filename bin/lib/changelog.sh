@@ -7,24 +7,57 @@
 
 set -eu
 
-# changelog_collect_commits LAST_TAG
+# changelog_collect_commits LAST_TAG VERSION
 #
 # 直前のタグ（LAST_TAG）から HEAD までのコミットを
 # "- subject" 形式の箇条書きで標準出力に返す。
 # LAST_TAG が空文字（= タグがまだ一つも無い初回リリース）の場合は
 # リポジトリ全コミットを対象にする。
+#
+# VERSION 自身の "chore: prepare release VERSION" は載せない。途中で止まった
+# リリースを回し直すと、前回の試行が作ったそのコミットが直前のタグより後ろに
+# 居るので、放っておくと自分の節に並ぶ。
 changelog_collect_commits() {
   last_tag="$1"
+  version="$2"
 
   # log.showSignature が有効だと --pretty の出力に GPG の検証メッセージが
   # 混ざり、そのまま CHANGELOG.md に書き込まれる（初回リリースで実際に混入した）。
   # 件名だけを取りたいので明示的に抑止する。
-
+  #
+  # git log はパイプへ直接つながない。左辺の失敗が見えなくなり、
+  # 箇条書きが空のまま先へ進んでしまう。
   if [ -n "$last_tag" ]; then
-    git log --no-show-signature "${last_tag}..HEAD" --pretty='- %s'
+    subjects=$(git log --no-show-signature "${last_tag}..HEAD" --pretty='- %s')
   else
-    git log --no-show-signature --pretty='- %s'
+    subjects=$(git log --no-show-signature --pretty='- %s')
   fi
+
+  printf '%s\n' "$subjects" \
+    | own="- chore: prepare release $version" awk '$0 != ENVIRON["own"]'
+}
+
+# changelog_has_release VERSION
+#
+# CHANGELOG.md に VERSION の節（"## [VERSION] - " で始まる見出し）が
+# あれば成功を返す。
+changelog_has_release() {
+  heading="## [$1] - " awk '
+    index($0, ENVIRON["heading"]) == 1 { found = 1 }
+    END { exit !found }
+  ' CHANGELOG.md
+}
+
+# changelog_release_commits VERSION
+#
+# CHANGELOG.md の VERSION の節に載っている箇条書きを、
+# changelog_collect_commits と同じ形で標準出力に返す。
+changelog_release_commits() {
+  heading="## [$1] - " awk '
+    index($0, ENVIRON["heading"]) == 1 { inside = 1; next }
+    inside && /^## / { exit }
+    inside && /^- / { print }
+  ' CHANGELOG.md
 }
 
 # changelog_stamp_release VERSION COMMITS
