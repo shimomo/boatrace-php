@@ -18,6 +18,10 @@ set -eu
 
 script_dir=$(cd "$(dirname "$0")" && pwd)
 
+# このスクリプトのあるリポジトリのルートへ移る。移らないと、呼び出した場所の
+# composer.json と packages/* を相手にしてしまう（bin/release.sh と同じ）。
+cd "$script_dir/.."
+
 # shellcheck source=lib/composer-merge.sh
 . "$script_dir/lib/composer-merge.sh"
 # shellcheck source=lib/composer-version.sh

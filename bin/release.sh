@@ -43,13 +43,20 @@ set -eu
 
 version="${1:?Usage: bin/release.sh <version>}"
 
+script_dir=$(cd "$(dirname "$0")" && pwd)
+
+# このスクリプトのあるリポジトリのルートへ移る。以降の git・composer・相対パスは
+# どれもカレントディレクトリを相手にするので、移らないと、呼び出した場所に
+# 対してリリース処理が走る。サブディレクトリからなら CHANGELOG.md が見つからずに
+# 落ちるだけだが、別のリポジトリの中から呼ぶと、そのリポジトリの CHANGELOG を
+# 書き換えてコミットし、タグまで打って push する。
+cd "$script_dir/.."
+
 # リリースが書き換えてコミットするファイル。下の事前チェックとステップ3の
 # git add で同じ並びを使う。片方にだけ足すと、未コミットの変更がまた
 # prepare release のコミットへ巻き込まれる。
 # グロブを展開させるので、使うときはクオートしない。
 release_files='composer.json packages/*/composer.json packages/*/README.md CHANGELOG.md'
-
-script_dir=$(cd "$(dirname "$0")" && pwd)
 
 # shellcheck source=lib/changelog.sh
 . "$script_dir/lib/changelog.sh"
