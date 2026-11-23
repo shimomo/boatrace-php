@@ -25,6 +25,11 @@
 #     "packages/<package>/" を前置してパスを補正する。
 #   - repositories セクションはルート側で固定運用しており
 #     merge対象に含める必要が無いため、このスクリプトでは触れない。
+#   - ルートの require は「パッケージの require を畳んだもの」として扱い、
+#     どのパッケージも要求しなくなった名前は外す。require-dev は足すだけ
+#     （ルートだけが持つ開発用の道具があるため）。
+#   - 止めるものが2つある。ルートの replace に載っていないパッケージと、
+#     パッケージ間で食い違う制約。どちらも、ここでは正しい答えを決められない。
 #
 # release.sh から `. bin/lib/composer-merge.sh` で読み込んで使う想定。
 
@@ -66,8 +71,52 @@ composer_merge_packages_into_root() {
     return 1
   fi
 
+  # 同じ依存への制約がパッケージ間で食い違っていたら、何も書かずに止める。
+  # ルートに書ける制約は1つで、どれを選ぶべきかはここでは決められない。
+  # 選ばせると、後に処理したパッケージの値が黙って勝つ（^8.1 と ^8.0 なら
+  # ディレクトリ名の順で ^8.0 になった）。require と require-dev をまたいでも見る。
+  conflicts=$(jq -r --argjson packages "$package_jsons" '
+    (.replace // {} | keys) as $internal_names
+    | [
+        $packages[]
+        | ._pkg_dir as $dir
+        | ((.require // {}), (."require-dev" // {}))
+        | to_entries[]
+        | select(.key as $k | ($internal_names | index($k)) | not)
+        | {name: .key, constraint: .value, dir: $dir}
+      ]
+    | group_by(.name)[]
+    | select((map(.constraint) | unique | length) > 1)
+    | "  \(.[0].name): "
+      + (group_by(.constraint) | map("\(.[0].constraint) (\(map(.dir) | join(", ")))") | join(", "))
+  ' composer.json)
+
+  if [ -n "$conflicts" ]; then
+    {
+      echo 'Packages disagree on these constraints:'
+      echo "$conflicts"
+      echo 'Make them the same and run again.'
+    } >&2
+    return 1
+  fi
+
+  # ルートの require から外れるものを知らせる（外すのは下の jq）。
+  removed=$(jq -r --argjson packages "$package_jsons" '
+    (.replace // {} | keys) as $internal_names
+    | ([$packages[] | .require // {} | keys[]] - $internal_names) as $wanted
+    | .require // {}
+    | keys[]
+    | select(. as $name | ($wanted | index($name)) | not)
+  ' composer.json)
+
+  if [ -n "$removed" ]; then
+    echo 'Removed from "require" in the root composer.json (no package requires them any more):'
+    printf '%s\n' "$removed" | sed 's/^/  /'
+  fi
+
   jq --indent 4 --argjson packages "$package_jsons" '
-    # 複数オブジェクトを「後勝ち」でマージするヘルパー
+    # 複数オブジェクトをマージするヘルパー。同じキーは後のものが残るが、
+    # 値が食い違う場合は上で止めているので、ここへ来るのは同じ値だけ。
     def merge_all: reduce .[] as $o ({}; . * $o);
 
     # ルート composer.json の replace に列挙されている名前 = 自社内部パッケージ。
@@ -105,8 +154,21 @@ composer_merge_packages_into_root() {
     ($merged_require_dev | with_entries(select(.key as $k | ($merged_require | has($k)) | not)))
       as $merged_require_dev_deduped
     |
-    .require = ((.require // {}) + $merged_require)
-    | ."require-dev" = ((."require-dev" // {}) + $merged_require_dev_deduped)
+    # require はパッケージを畳んだものにする。どのパッケージも要求しなく
+    # なった名前は外す（足すだけだと、パッケージから外した依存がルートに残る）。
+    # 残るキーの並びは保ち、新しいキーは末尾へ足す。
+    .require = (
+      ((.require // {}) | with_entries(select(.key as $k | $merged_require | has($k))))
+      + $merged_require
+    )
+    # require-dev は足すだけにする。ルートだけが持つ開発用の道具（pint など）が
+    # あり、パッケージが要求していないからといって外せない。
+    # ただし require に入った名前は外す。require-dev から require へ移した依存が
+    # 両方に残るのを防ぐ。
+    | ."require-dev" = (
+        ((."require-dev" // {}) | with_entries(select(.key as $k | $merged_require | has($k) | not)))
+        + $merged_require_dev_deduped
+      )
     | .autoload.["psr-4"] = ((.autoload.["psr-4"] // {}) + $merged_autoload)
     | ."autoload-dev".["psr-4"] = ((."autoload-dev".["psr-4"] // {}) + $merged_autoload_dev)
   ' composer.json > composer.json.tmp
