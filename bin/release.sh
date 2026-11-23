@@ -8,6 +8,8 @@
 #   例: bin/release.sh 0.1.0
 #
 # 全体の流れ:
+#   0. 始める前の検査（バージョンの形・ブランチ・未コミットの変更・
+#      origin とのずれ・タグの重複）。何も変えないうちに止める
 #   1. CHANGELOG.md の "Unreleased" 見出しを今回のバージョンの見出しに
 #      置き換え、対象コミット一覧を書き込む
 #      （途中で止まった前回の試行の節がもうあれば、それを使い回す）
@@ -35,7 +37,61 @@ set -eu
 
 version="${1:?Usage: bin/release.sh <version>}"
 
-# 同じバージョンのタグが既にあるなら、何も変えないうちに止める。
+# リリースが書き換えてコミットするファイル。下の事前チェックとステップ3の
+# git add で同じ並びを使う。片方にだけ足すと、未コミットの変更がまた
+# prepare release のコミットへ巻き込まれる。
+# グロブを展開させるので、使うときはクオートしない。
+release_files='composer.json packages/*/composer.json packages/*/README.md CHANGELOG.md'
+
+# ---------------------------------------------------------------------------
+# 0. 始める前の検査
+# ---------------------------------------------------------------------------
+# どれも、何も変えないうちに止めるためのもの。ここを通った後で止まると、
+# 書きかけの CHANGELOG や push 済みのコミットが残る。
+
+# バージョンは x.y.z だけを受け付ける。この値はそのままタグ名・依存の制約
+# （^x.y.z）・branch-alias（x.y.x-dev）になり、形が崩れていても最後まで
+# 通ってしまう（"foo" なら ^foo と foo.x-dev が配られる）。
+if ! expr "X$version" : 'X[0-9][0-9]*\.[0-9][0-9]*\.[0-9][0-9]*$' > /dev/null; then
+  echo "Version must look like 1.2.3, got: $version" >&2
+  exit 1
+fi
+
+# main の上でだけ出す。ステップ3は「いまのブランチへコミットして main を push」
+# なので、別のブランチに居ると main は動かないまま、タグと分割先だけが
+# そのブランチの内容で公開される（エラーにもならない）。
+branch=$(git symbolic-ref --short -q HEAD || echo '')
+if [ "$branch" != main ]; then
+  echo "Releases are cut from main, but the current branch is ${branch:-detached}." >&2
+  exit 1
+fi
+
+# リリースがコミットするファイルに、未コミットの変更が無いこと。ステップ3の
+# git add がそのまま拾い、prepare release のコミットに混ざって分割先まで
+# 配られる。コミットの前で止まったリリースの書きかけも、ここで止まる。
+# shellcheck disable=SC2086
+dirty=$(git status --porcelain --untracked-files=all -- $release_files)
+if [ -n "$dirty" ]; then
+  {
+    echo 'These files have uncommitted changes that the release commit would pick up:'
+    echo "$dirty"
+    echo 'Commit them, or discard them (an interrupted release leaves its edits behind):'
+    echo "  git restore --staged --worktree -- $release_files"
+  } >&2
+  exit 1
+fi
+
+# origin の main より遅れていないこと。遅れているとステップ3の push が拒否され、
+# prepare release のコミットがローカルにだけ残る。
+# タグも一緒に取ってくる。別の場所で打たれたタグは、取ってこないと
+# 下の重複チェックから見えない。
+git fetch --quiet --tags origin main
+if ! git merge-base --is-ancestor origin/main HEAD; then
+  echo 'main is behind origin/main. Pull first.' >&2
+  exit 1
+fi
+
+# 同じバージョンのタグが既にあるなら止める。
 # 放っておいてもステップ4の git tag で落ちるが、その時点では CHANGELOG の節と
 # prepare release のコミットがもう push されている（途中で止まったリリースを
 # 同じバージョンで回し直すと、空の節が二重に書かれる）。
@@ -99,9 +155,10 @@ composer_version_release "$version"
 # ---------------------------------------------------------------------------
 # ここでコミットしておかないと、後続の subtree split に
 # バージョン更新が含まれないまま各パッケージへ配布されてしまう。
-# CHANGELOG.md もここで入れる。外すと今回の節がステップ6のコミットへ
-# 落ち、タグの時点の CHANGELOG に自分の節が載らない。
-git add composer.json packages/*/composer.json packages/*/README.md CHANGELOG.md
+# CHANGELOG.md もここで入れる（release_files に含めてある）。外すと今回の節が
+# ステップ6のコミットへ落ち、タグの時点の CHANGELOG に自分の節が載らない。
+# shellcheck disable=SC2086
+git add $release_files
 
 if ! git diff --cached --quiet; then
   git commit -m "chore: prepare release $version"
