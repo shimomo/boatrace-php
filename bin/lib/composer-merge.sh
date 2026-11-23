@@ -119,6 +119,12 @@ composer_merge_packages_into_root() {
     # 値が食い違う場合は上で止めているので、ここへ来るのは同じ値だけ。
     def merge_all: reduce .[] as $o ({}; . * $o);
 
+    # psr-4 のパスの前にパッケージのディレクトリを付ける。
+    # 値は文字列のほか、パスの配列でも書ける（Composer の仕様）。文字列と
+    # 決めてかかると、配列のときに jq が足し算で落ちる。
+    def prefixed($dir):
+      if type == "array" then map($dir + "/" + .) else $dir + "/" + . end;
+
     # ルート composer.json の replace に列挙されている名前 = 自社内部パッケージ。
     # これらへの require/require-dev はルートへ積まない（replaceで解決されるため）。
     (.replace // {} | keys) as $internal_names
@@ -138,7 +144,7 @@ composer_merge_packages_into_root() {
       | map(
           ._pkg_dir as $dir
           | (.autoload.["psr-4"] // {})
-          | with_entries(.value = ($dir + "/" + .value))
+          | with_entries(.value |= prefixed($dir))
         )
       | merge_all) as $merged_autoload
     |
@@ -146,7 +152,7 @@ composer_merge_packages_into_root() {
       | map(
           ._pkg_dir as $dir
           | (."autoload-dev".["psr-4"] // {})
-          | with_entries(.value = ($dir + "/" + .value))
+          | with_entries(.value |= prefixed($dir))
         )
       | merge_all) as $merged_autoload_dev
     |
