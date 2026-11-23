@@ -46,6 +46,26 @@ composer_merge_packages_into_root() {
     done | jq -s '.'
   )
 
+  # ルートの replace に載っていないパッケージがあれば、何も書かずに止める。
+  # 下のマージは replace の名前を「内部パッケージ」として require から外すので、
+  # 載っていないと、そのパッケージへの依存が外部のものとしてルートの require に
+  # 積まれる。replace は手で保守しているので、パッケージを足したときに漏れる。
+  unlisted=$(jq -r --argjson packages "$package_jsons" '
+    (.replace // {}) as $replace
+    | $packages[]
+    | select((.name // "") as $name | $replace | has($name) | not)
+    | "  \(._pkg_dir) (\(.name // "no name"))"
+  ' composer.json)
+
+  if [ -n "$unlisted" ]; then
+    {
+      echo 'These packages are missing from "replace" in the root composer.json:'
+      echo "$unlisted"
+      echo 'Add each of them as "<name>": "self.version" and run again.'
+    } >&2
+    return 1
+  fi
+
   jq --indent 4 --argjson packages "$package_jsons" '
     # 複数オブジェクトを「後勝ち」でマージするヘルパー
     def merge_all: reduce .[] as $o ({}; . * $o);
