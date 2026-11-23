@@ -34,6 +34,10 @@ set -eu
 #   - require / require-dev のどちらに boatrace/* が
 #     書かれていても対応できるよう両方を更新対象にしている
 #   - バージョン制約のフォーマットは `^x.y.z` 固定（複合制約は使わない）。
+#   - require / require-dev を持たないパッケージは、そのセクションに触れずに通す。
+#     `(.require // {}) |= ...` と書くと、キーが無いときに `//` の右辺が代入先に
+#     なれず、jq が "Invalid path expression" で落ちる。空のセクションを
+#     足すこともしない。
 composer_version_update_package_requires() {
   version="$1"
   constraint="^$version"
@@ -43,12 +47,12 @@ composer_version_update_package_requires() {
     [ -f "$f" ] || continue
 
     jq --indent 4 --arg v "$constraint" '
-      (.require // {}) |= with_entries(
+      def bump: with_entries(
         if (.key | startswith("boatrace/")) then .value = $v else . end
-      )
-      | (."require-dev" // {}) |= with_entries(
-          if (.key | startswith("boatrace/")) then .value = $v else . end
-        )
+      );
+
+      if has("require") then .require |= bump else . end
+      | if has("require-dev") then ."require-dev" |= bump else . end
     ' "$f" > "$f.tmp"
     mv "$f.tmp" "$f"
   done
